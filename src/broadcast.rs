@@ -64,7 +64,7 @@
 //! Basic usage
 //!
 //! ```
-//! use tokio::sync::broadcast;
+//! use broadcast_rs::broadcast;
 //!
 //! #[tokio::main]
 //! async fn main() {
@@ -89,7 +89,7 @@
 //! Handling lag
 //!
 //! ```
-//! use tokio::sync::broadcast;
+//! use broadcast_rs::broadcast;
 //!
 //! #[tokio::main]
 //! async fn main() {
@@ -131,7 +131,7 @@ use std::usize;
 /// # Examples
 ///
 /// ```
-/// use tokio::sync::broadcast;
+/// use broadcast_rs::broadcast;
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -171,7 +171,7 @@ pub struct Sender<T> {
 /// # Examples
 ///
 /// ```
-/// use tokio::sync::broadcast;
+/// use broadcast_rs::broadcast;
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -409,7 +409,7 @@ const MAX_RECEIVERS: usize = usize::MAX >> 2;
 /// # Examples
 ///
 /// ```
-/// use tokio::sync::broadcast;
+/// use broadcast_rs::broadcast;
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -511,7 +511,7 @@ impl<T> Sender<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -578,7 +578,7 @@ impl<T> Sender<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -621,7 +621,7 @@ impl<T> Sender<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -716,7 +716,7 @@ impl<T> Receiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -745,7 +745,7 @@ impl<T> Receiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -873,7 +873,7 @@ impl<T: Clone> Receiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -919,7 +919,7 @@ impl<T: Clone> Receiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -944,7 +944,7 @@ impl<T: Clone> Receiver<T> {
     /// Handling lag
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -994,7 +994,7 @@ impl<T: Clone> Receiver<T> {
     /// # Examples
     ///
     /// ```
-    /// use tokio::sync::broadcast;
+    /// use broadcast_rs::broadcast;
     ///
     /// #[tokio::main]
     /// async fn main() {

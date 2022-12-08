@@ -533,7 +533,7 @@ impl<T> Sender<T> {
     /// }
     /// ```
     pub fn send(&self, value: T) -> Result<usize, SendError<T>> {
-        let mut tail = self.shared.tail.lock();
+        let mut tail = self.shared.tail.lock().unwrap();
 
         if tail.rx_cnt == 0 {
             return Err(SendError(value));
@@ -637,12 +637,12 @@ impl<T> Sender<T> {
     /// }
     /// ```
     pub fn receiver_count(&self) -> usize {
-        let tail = self.shared.tail.lock();
+        let tail = self.shared.tail.lock().unwrap();
         tail.rx_cnt
     }
 
     fn close_channel(&self) {
-        let mut tail = self.shared.tail.lock();
+        let mut tail = self.shared.tail.lock().unwrap();
         tail.closed = true;
 
         tail.notify_rx();
@@ -651,7 +651,7 @@ impl<T> Sender<T> {
 
 /// Create a new `Receiver` which reads starting from the tail.
 fn new_receiver<T>(shared: Arc<Shared<T>>) -> Receiver<T> {
-    let mut tail = shared.tail.lock();
+    let mut tail = shared.tail.lock().unwrap();
 
     if tail.rx_cnt == MAX_RECEIVERS {
         panic!("max receivers");
@@ -733,7 +733,7 @@ impl<T> Receiver<T> {
     /// }
     /// ```
     pub fn len(&self) -> usize {
-        let next_send_pos = self.shared.tail.lock().pos;
+        let next_send_pos = self.shared.tail.lock().unwrap().pos;
         (next_send_pos - self.next) as usize
     }
 
@@ -786,7 +786,7 @@ impl<T> Receiver<T> {
             // the slot lock.
             drop(slot);
 
-            let mut tail = self.shared.tail.lock();
+            let mut tail = self.shared.tail.lock().unwrap();
 
             // Acquire slot lock again
             slot = self.shared.buffer[idx].read().unwrap();
@@ -1016,7 +1016,7 @@ impl<T: Clone> Receiver<T> {
 
 impl<T> Drop for Receiver<T> {
     fn drop(&mut self) {
-        let mut tail = self.shared.tail.lock();
+        let mut tail = self.shared.tail.lock().unwrap();
 
         tail.rx_cnt -= 1;
         let until = tail.pos;
@@ -1087,7 +1087,7 @@ impl<'a, T> Drop for Recv<'a, T> {
     fn drop(&mut self) {
         // Acquire the tail lock. This is required for safety before accessing
         // the waiter node.
-        let mut tail = self.receiver.shared.tail.lock();
+        let mut tail = self.receiver.shared.tail.lock().unwrap();
 
         // safety: tail lock is held
         let queued = self.waiter.with(|ptr| unsafe { (*ptr).queued });

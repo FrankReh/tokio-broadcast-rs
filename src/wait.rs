@@ -109,8 +109,8 @@
 //! }
 //! ```
 
-use std::cell::UnsafeCell;
-use std::sync::atomic::AtomicUsize;
+use crate::util::unsafe_cell::UnsafeCell;
+use crate::util::atomic_usize::AtomicUsize;
 use std::sync::{Arc, Mutex, RwLock, RwLockReadGuard};
 use crate::util::linked_list::{self, LinkedList};
 

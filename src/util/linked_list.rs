@@ -244,6 +244,7 @@ impl<L: Link> Default for LinkedList<L, L::Target> {
     }
 }
 
+/* Commented out, as not used by wait module.
 // ===== impl DrainFilter =====
 
 cfg_io_readiness! {
@@ -289,6 +290,7 @@ cfg_io_readiness! {
         }
     }
 }
+*/
 
 // ===== impl Pointers =====
 

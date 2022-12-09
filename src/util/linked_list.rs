@@ -16,7 +16,7 @@ use core::ptr::{self, NonNull};
 ///
 /// Currently, the list is not emptied on drop. It is the caller's
 /// responsibility to ensure the list is empty before dropping it.
-pub(crate) struct LinkedList<L, T> {
+pub struct LinkedList<L, T> {
     /// Linked list head
     head: Option<NonNull<T>>,
 
@@ -40,7 +40,7 @@ unsafe impl<L: Link> Sync for LinkedList<L, L::Target> where L::Target: Sync {}
 /// Implementations must guarantee that `Target` types are pinned in memory. In
 /// other words, when a node is inserted, the value will not be moved as long as
 /// it is stored in the list.
-pub(crate) unsafe trait Link {
+pub unsafe trait Link {
     /// Handle to the list entry.
     ///
     /// This is usually a pointer-ish type.
@@ -54,6 +54,10 @@ pub(crate) unsafe trait Link {
     fn as_raw(handle: &Self::Handle) -> NonNull<Self::Target>;
 
     /// Convert the raw pointer to a handle
+    ///
+    /// # Safety
+    ///
+    /// The type implementing this trait must be !Unpin.
     unsafe fn from_raw(ptr: NonNull<Self::Target>) -> Self::Handle;
 
     /// Return the pointers for a node
@@ -68,7 +72,7 @@ pub(crate) unsafe trait Link {
 }
 
 /// Previous / next pointers.
-pub(crate) struct Pointers<T> {
+pub struct Pointers<T> {
     inner: UnsafeCell<PointersInner<T>>,
 }
 /// We do not want the compiler to put the `noalias` attribute on mutable
@@ -112,7 +116,7 @@ unsafe impl<T: Sync> Sync for Pointers<T> {}
 
 impl<L, T> LinkedList<L, T> {
     /// Creates an empty linked list.
-    pub(crate) const fn new() -> LinkedList<L, T> {
+    pub const fn new() -> LinkedList<L, T> {
         LinkedList {
             head: None,
             tail: None,
@@ -123,7 +127,7 @@ impl<L, T> LinkedList<L, T> {
 
 impl<L: Link> LinkedList<L, L::Target> {
     /// Adds an element first in the list.
-    pub(crate) fn push_front(&mut self, val: L::Handle) {
+    pub fn push_front(&mut self, val: L::Handle) {
         // The value should not be dropped, it is being inserted into the list
         let val = ManuallyDrop::new(val);
         let ptr = L::as_raw(&val);
@@ -146,7 +150,7 @@ impl<L: Link> LinkedList<L, L::Target> {
 
     /// Removes the last element from a list and returns it, or None if it is
     /// empty.
-    pub(crate) fn pop_back(&mut self) -> Option<L::Handle> {
+    pub fn pop_back(&mut self) -> Option<L::Handle> {
         unsafe {
             let last = self.tail?;
             self.tail = L::pointers(last).as_ref().get_prev();
@@ -165,7 +169,7 @@ impl<L: Link> LinkedList<L, L::Target> {
     }
 
     /// Returns whether the linked list does not contain any node
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         if self.head.is_some() {
             return false;
         }
@@ -180,7 +184,7 @@ impl<L: Link> LinkedList<L, L::Target> {
     ///
     /// The caller **must** ensure that `node` is currently contained by
     /// `self` or not contained by any other list.
-    pub(crate) unsafe fn remove(&mut self, node: NonNull<L::Target>) -> Option<L::Handle> {
+    pub unsafe fn remove(&mut self, node: NonNull<L::Target>) -> Option<L::Handle> {
         if let Some(prev) = L::pointers(node).as_ref().get_prev() {
             debug_assert_eq!(L::pointers(prev).as_ref().get_next(), Some(node));
             L::pointers(prev)
@@ -213,6 +217,38 @@ impl<L: Link> LinkedList<L, L::Target> {
 
         Some(L::from_raw(node))
     }
+
+    /// Returns the length of the linked list, counting forwards.
+    ///
+    /// This is an O(n) operation.
+    /// Primarily for debugging and unit tests in other modules.
+    pub fn len(&self) -> usize {
+        let mut n: usize = 0;
+        let mut next = self.head;
+        while let Some(ptr) = next {
+            unsafe {
+                next = L::pointers(ptr).as_ref().get_next();
+            }
+            n += 1;
+        }
+        n
+    }
+
+    /// Returns the length of the linked list, counting backwards.
+    ///
+    /// This is an O(n) operation.
+    /// Primarily for debugging and unit tests in other modules.
+    pub fn len_backwards(&self) -> usize {
+        let mut n: usize = 0;
+        let mut prev = self.tail;
+        while let Some(ptr) = prev {
+            unsafe {
+                prev = L::pointers(ptr).as_ref().get_prev();
+            }
+            n += 1;
+        }
+        n
+    }
 }
 
 impl<L: Link> fmt::Debug for LinkedList<L, L::Target> {
@@ -232,7 +268,7 @@ impl<L: Link> fmt::Debug for LinkedList<L, L::Target> {
     feature = "sync",
 ))]
 impl<L: Link> LinkedList<L, L::Target> {
-    pub(crate) fn last(&self) -> Option<&L::Target> {
+    pub fn last(&self) -> Option<&L::Target> {
         let tail = self.tail.as_ref()?;
         unsafe { Some(&*tail.as_ptr()) }
     }
@@ -294,9 +330,15 @@ cfg_io_readiness! {
 
 // ===== impl Pointers =====
 
+impl<T> Default for Pointers<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> Pointers<T> {
     /// Create a new set of empty pointers
-    pub(crate) fn new() -> Pointers<T> {
+    pub fn new() -> Pointers<T> {
         Pointers {
             inner: UnsafeCell::new(PointersInner {
                 prev: None,
@@ -306,7 +348,7 @@ impl<T> Pointers<T> {
         }
     }
 
-    pub(crate) fn get_prev(&self) -> Option<NonNull<T>> {
+    pub fn get_prev(&self) -> Option<NonNull<T>> {
         // SAFETY: prev is the first field in PointersInner, which is #[repr(C)].
         unsafe {
             let inner = self.inner.get();
@@ -314,7 +356,7 @@ impl<T> Pointers<T> {
             ptr::read(prev)
         }
     }
-    pub(crate) fn get_next(&self) -> Option<NonNull<T>> {
+    pub fn get_next(&self) -> Option<NonNull<T>> {
         // SAFETY: next is the second field in PointersInner, which is #[repr(C)].
         unsafe {
             let inner = self.inner.get();
